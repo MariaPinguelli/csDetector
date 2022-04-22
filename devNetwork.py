@@ -23,6 +23,19 @@ from dateutil.relativedelta import relativedelta
 
 FILEBROWSER_PATH = os.path.join(os.getenv("WINDIR"), "explorer.exe")
 
+communitySmells = [
+       {"acronym": "OSE", "name": "Organizational Silo Effect"},
+       {"acronym": "BCE", "name": "Black-cloud Effect"},
+       {"acronym": "PDE", "name": "Prima-donnas Effect"},
+       {"acronym": "SV", "name": "Sharing Villainy"},
+       {"acronym": "OS", "name": "Organizational Skirmish"},
+       {"acronym": "SD", "name": "Solution Defiance "},
+       {"acronym": "RS", "name": "Radio Silence"},
+       {"acronym": "TFS", "name": "Truck Factor Smell"},
+       {"acronym": "UI", "name": "Unhealthy Interaction"},
+       {"acronym": "TC", "name": "Toxic Communication"},
+    ]
+
 
 def main(argv):
     try:
@@ -119,7 +132,7 @@ def main(argv):
         )
 
         politenessAnalysis(config, prCommentBatches, issueCommentBatches)
-
+        result = {}
         for batchIdx, batchDate in enumerate(batchDates):
 
             # get combined author lists
@@ -161,13 +174,29 @@ def main(argv):
             )
 
             # run smell detection
-            smellDetection(config, batchIdx)
+            detectedSmells = smellDetection(config, batchIdx)
 
+            # building a dictionary of detected community smells for each batch analyzed
+            result["Index"] = batchIdx
+            result["StartingDate"] = batchDate.strftime("%m/%d/%Y")
+            
+            # separating smells and converting in their full name
+            for index, smell in enumerate(detectedSmells):
+                if(index != 0):
+                    smellName = "Smell" + str(index)
+                    result[smellName] = [smell, get_community_smell_name(detectedSmells[index])]
+        print(result)
     finally:
         # close repo to avoid resource leaks
         if "repo" in locals():
             del repo
 
+# converting community smell acronym in full name
+def get_community_smell_name(smell):
+    for sm in communitySmells:
+        if sm["acronym"] == smell:
+            return sm["name"]
+    return smell
 
 class Progress(git.remote.RemoteProgress):
     def update(self, op_code, cur_count, max_count=None, message=""):
@@ -176,6 +205,8 @@ class Progress(git.remote.RemoteProgress):
 
 def commitDate(tag):
     return tag.commit.committed_date
+
+
 
 
 def remove_readonly(fn, path, excinfo):

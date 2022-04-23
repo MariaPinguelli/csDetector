@@ -5,7 +5,9 @@ import shutil
 import stat
 import git
 import pkg_resources
-import sentistrength
+import sentistrength  
+import csv
+import pandas as pd
 
 from configuration import parseDevNetworkArgs
 from repoLoader import getRepo
@@ -35,8 +37,7 @@ communitySmells = [
        {"acronym": "UI", "name": "Unhealthy Interaction"},
        {"acronym": "TC", "name": "Toxic Communication"},
     ]
-
-
+  
 def main(argv):
     try:
         # validate running in venv
@@ -185,6 +186,7 @@ def main(argv):
                 if(index != 0):
                     smellName = "Smell" + str(index)
                     result[smellName] = [smell, get_community_smell_name(detectedSmells[index])]
+            add_to_smells_dataset(config, batchDate.strftime("%m/%d/%Y"), detectedSmells)
         print(result)
     finally:
         # close repo to avoid resource leaks
@@ -197,6 +199,17 @@ def get_community_smell_name(smell):
         if sm["acronym"] == smell:
             return sm["name"]
     return smell
+
+# collecting execution data into a dataset
+def add_to_smells_dataset(config, startingDate, detectedSmells):
+    dataframe =  pd.DataFrame({'repositoryUrl':[config.repositoryUrl], 'repositoryName' : [config.repositoryName], 'repositoryAuthor': [config.repositoryOwner], 'startingDate': [startingDate], 
+        'OSE': [str(detectedSmells.count('OSE'))], 'BCE': [str(detectedSmells.count('BCE'))], 'PDE': [str(detectedSmells.count('PDE'))], 'SV': [str(detectedSmells.count('SV'))], 
+        'OS': [str(detectedSmells.count('OS'))],'SD': [str(detectedSmells.count('SD'))], 'RS': [str(detectedSmells.count('RS'))],'TFS': [str(detectedSmells.count('TFS'))], 
+        'UI': [str(detectedSmells.count('UI'))],'TC': [str(detectedSmells.count('TC'))] })
+    print(dataframe)
+    with pd.ExcelWriter('./communitySmellsDataset.xlsx', engine="openpyxl", mode='a') as writer:  
+        dataframe.to_excel(writer, header=None, ) 
+
 
 class Progress(git.remote.RemoteProgress):
     def update(self, op_code, cur_count, max_count=None, message=""):
@@ -212,6 +225,7 @@ def commitDate(tag):
 def remove_readonly(fn, path, excinfo):
     os.chmod(path, stat.S_IWRITE)
     remove_tree(path)
+
 
 
 def remove_tree(path):

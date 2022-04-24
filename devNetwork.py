@@ -202,13 +202,25 @@ def get_community_smell_name(smell):
 
 # collecting execution data into a dataset
 def add_to_smells_dataset(config, startingDate, detectedSmells):
-    dataframe =  pd.DataFrame({'repositoryUrl':[config.repositoryUrl], 'repositoryName' : [config.repositoryName], 'repositoryAuthor': [config.repositoryOwner], 'startingDate': [startingDate], 
-        'OSE': [str(detectedSmells.count('OSE'))], 'BCE': [str(detectedSmells.count('BCE'))], 'PDE': [str(detectedSmells.count('PDE'))], 'SV': [str(detectedSmells.count('SV'))], 
-        'OS': [str(detectedSmells.count('OS'))],'SD': [str(detectedSmells.count('SD'))], 'RS': [str(detectedSmells.count('RS'))],'TFS': [str(detectedSmells.count('TFS'))], 
-        'UI': [str(detectedSmells.count('UI'))],'TC': [str(detectedSmells.count('TC'))] })
-    print(dataframe)
-    with pd.ExcelWriter('./communitySmellsDataset.xlsx', engine="openpyxl", mode='a') as writer:  
-        dataframe.to_excel(writer, header=None, ) 
+    with pd.ExcelWriter('./communitySmellsDataset.xlsx', engine="openpyxl", mode='a', if_sheet_exists="overlay") as writer:  
+        dataframe =  pd.DataFrame(index=[writer.sheets['dataset'].max_row], 
+            data={'repositoryUrl':[config.repositoryUrl], 
+                'repositoryName' : [config.repositoryName], 
+                'repositoryAuthor': [config.repositoryOwner], 
+                'startingDate': [startingDate], 
+                'OSE': [str(detectedSmells.count('OSE'))], 
+                'BCE': [str(detectedSmells.count('BCE'))], 
+                'PDE': [str(detectedSmells.count('PDE'))], 
+                'SV': [str(detectedSmells.count('SV'))], 
+                'OS': [str(detectedSmells.count('OS'))],
+                'SD': [str(detectedSmells.count('SD'))], 
+                'RS': [str(detectedSmells.count('RS'))],
+                'TFS': [str(detectedSmells.count('TFS'))], 
+                'UI': [str(detectedSmells.count('UI'))],
+                'TC': [str(detectedSmells.count('TC'))] 
+            })
+        dataframe.to_excel(writer, sheet_name="dataset", startrow=writer.sheets['dataset'].max_row, header=False)
+
 
 
 class Progress(git.remote.RemoteProgress):

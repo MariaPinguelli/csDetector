@@ -3,16 +3,20 @@ from typing import Sequence
 import sys
 import os
 
-# Adaptee class for the adapter pattern, the one responsible for the execution of the tool (through the executeTool method)
-# since the target takes command line input, but we want to send data in json from a web service, we need an adapter to fix the problem
 
+# since the interface of the execution is only command line input, we want something to adapt our web service
+# we will have an adapter class that will extend csDetector and parses the local input
 
 class CsDetector:
 
+    # executeTool takes input like the following:
+    # ['-p', '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', '-r', 'https://github.com/tensorflow/ranking', '-s', './senti', '-o', './out', (optional)'-sd', (optional)'2021-12-31']
     def executeTool(self, argv):
         devNetwork(argv)
 
 
 if __name__ == "__main__":
+
+    inputData = sys.argv[1:]
     tool = CsDetector()
-    tool.executeTool(sys.argv[1:])
+    tool.executeTool(inputData)

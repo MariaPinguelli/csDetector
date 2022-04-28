@@ -18,5 +18,6 @@ class CsDetector:
 if __name__ == "__main__":
 
     inputData = sys.argv[1:]
+    print(inputData)
     tool = CsDetector()
     tool.executeTool(inputData)

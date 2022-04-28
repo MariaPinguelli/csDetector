@@ -149,7 +149,7 @@ def parseDevNetworkArgs(args: Sequence[str]):
         required=False,
     )
 
-    args = parser.parse_args()
+    args = parser.parse_args(args)
     config = Configuration(
         args.repositoryUrl,
         args.batchMonths,

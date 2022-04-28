@@ -43,6 +43,7 @@ communitySmells = [
 
 
 def devNetwork(argv):
+    print(argv)
     try:
         # validate running in venv
         if not hasattr(sys, "prefix"):
@@ -86,7 +87,7 @@ def devNetwork(argv):
             )
 
         # parse args
-        config = parseDevNetworkArgs(sys.argv)
+        config = parseDevNetworkArgs(argv)
         # prepare folders
         if os.path.exists(config.resultsPath):
             remove_tree(config.resultsPath)

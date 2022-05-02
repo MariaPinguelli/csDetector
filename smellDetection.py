@@ -37,9 +37,8 @@ def smellDetection(config: Configuration, batchIdx: int):
     # add last commit date as first output param
     detectedSmells.insert(0, results["LastCommitDate"])
 
-    # display results
-    print("Detected smells:")
-    print(detectedSmells)
+    # returning detected smells to devNetwork to handle output
+    return detectedSmells
 
 
 def buildMetricsList(results: dict):

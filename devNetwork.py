@@ -6,6 +6,8 @@ import stat
 import git
 import pkg_resources
 import sentistrength
+import csv
+import pandas as pd
 
 from configuration import parseDevNetworkArgs
 from repoLoader import getRepo
@@ -23,8 +25,24 @@ from dateutil.relativedelta import relativedelta
 
 FILEBROWSER_PATH = os.path.join(os.getenv("WINDIR"), "explorer.exe")
 
+communitySmells = [
+    {"acronym": "OSE", "name": "Organizational Silo Effect"},
+    {"acronym": "BCE", "name": "Black-cloud Effect"},
+    {"acronym": "PDE", "name": "Prima-donnas Effect"},
+    {"acronym": "SV", "name": "Sharing Villainy"},
+    {"acronym": "OS", "name": "Organizational Skirmish"},
+    {"acronym": "SD", "name": "Solution Defiance "},
+    {"acronym": "RS", "name": "Radio Silence"},
+    {"acronym": "TFS", "name": "Truck Factor Smell"},
+    {"acronym": "UI", "name": "Unhealthy Interaction"},
+    {"acronym": "TC", "name": "Toxic Communication"},
+]
 
-def main(argv):
+
+# This is the actual target , which means has the functionality we need
+
+
+def devNetwork(argv):
     try:
         # validate running in venv
         if not hasattr(sys, "prefix"):
@@ -68,7 +86,7 @@ def main(argv):
             )
 
         # parse args
-        config = parseDevNetworkArgs(sys.argv)
+        config = parseDevNetworkArgs(argv)
         # prepare folders
         if os.path.exists(config.resultsPath):
             remove_tree(config.resultsPath)
@@ -81,10 +99,12 @@ def main(argv):
         # setup sentiment analysis
         senti = sentistrength.PySentiStr()
 
-        sentiJarPath = os.path.join(config.sentiStrengthPath, "SentiStrength.jar").replace("\\", "/")
+        sentiJarPath = os.path.join(
+            config.sentiStrengthPath, "SentiStrength.jar").replace("\\", "/")
         senti.setSentiStrengthPath(sentiJarPath)
 
-        sentiDataPath = os.path.join(config.sentiStrengthPath, "SentiStrength_Data").replace("\\", "/") + "/"
+        sentiDataPath = os.path.join(
+            config.sentiStrengthPath, "SentiStrength_Data").replace("\\", "/") + "/"
         senti.setSentiStrengthLanguageFolderPath(sentiDataPath)
 
         # prepare batch delta
@@ -100,7 +120,8 @@ def main(argv):
 
         tagAnalysis(repo, delta, batchDates, daysActive, config)
 
-        coreDevs = centrality.centralityAnalysis(commits, delta, batchDates, config)
+        coreDevs = centrality.centralityAnalysis(
+            commits, delta, batchDates, config)
 
         releaseAnalysis(commits, config, delta, batchDates)
 
@@ -119,12 +140,13 @@ def main(argv):
         )
 
         politenessAnalysis(config, prCommentBatches, issueCommentBatches)
-
+        result = {}
         for batchIdx, batchDate in enumerate(batchDates):
 
             # get combined author lists
             combinedAuthorsInBatch = (
-                prParticipantBatches[batchIdx] + issueParticipantBatches[batchIdx]
+                prParticipantBatches[batchIdx] +
+                issueParticipantBatches[batchIdx]
             )
 
             # build combined network
@@ -161,12 +183,58 @@ def main(argv):
             )
 
             # run smell detection
-            smellDetection(config, batchIdx)
+            detectedSmells = smellDetection(config, batchIdx)
 
+            # building a dictionary of detected community smells for each batch analyzed
+            result["Index"] = batchIdx
+            result["StartingDate"] = batchDate.strftime("%m/%d/%Y")
+
+            # separating smells and converting in their full name
+            for index, smell in enumerate(detectedSmells):
+                if(index != 0):
+                    smellName = "Smell" + str(index)
+                    result[smellName] = [
+                        smell, get_community_smell_name(detectedSmells[index])]
+            add_to_smells_dataset(
+                config, batchDate.strftime("%m/%d/%Y"), detectedSmells)
+        return result, detectedSmells
     finally:
         # close repo to avoid resource leaks
         if "repo" in locals():
             del repo
+
+# converting community smell acronym in full name
+
+
+def get_community_smell_name(smell):
+    for sm in communitySmells:
+        if sm["acronym"] == smell:
+            return sm["name"]
+    return smell
+
+# collecting execution data into a dataset
+
+
+def add_to_smells_dataset(config, startingDate, detectedSmells):
+    with pd.ExcelWriter('./communitySmellsDataset.xlsx', engine="openpyxl", mode='a', if_sheet_exists="overlay") as writer:
+        dataframe = pd.DataFrame(index=[writer.sheets['dataset'].max_row],
+                                 data={'repositoryUrl': [config.repositoryUrl],
+                                       'repositoryName': [config.repositoryName],
+                                       'repositoryAuthor': [config.repositoryOwner],
+                                       'startingDate': [startingDate],
+                                       'OSE': [str(detectedSmells.count('OSE'))],
+                                       'BCE': [str(detectedSmells.count('BCE'))],
+                                       'PDE': [str(detectedSmells.count('PDE'))],
+                                       'SV': [str(detectedSmells.count('SV'))],
+                                       'OS': [str(detectedSmells.count('OS'))],
+                                       'SD': [str(detectedSmells.count('SD'))],
+                                       'RS': [str(detectedSmells.count('RS'))],
+                                       'TFS': [str(detectedSmells.count('TFS'))],
+                                       'UI': [str(detectedSmells.count('UI'))],
+                                       'TC': [str(detectedSmells.count('TC'))]
+                                       })
+        dataframe.to_excel(writer, sheet_name="dataset",
+                           startrow=writer.sheets['dataset'].max_row, header=False)
 
 
 class Progress(git.remote.RemoteProgress):
@@ -199,7 +267,3 @@ def explore(path):
         subprocess.run([FILEBROWSER_PATH, path])
     elif os.path.isfile(path):
         subprocess.run([FILEBROWSER_PATH, "/select,", os.path.normpath(path)])
-
-
-if __name__ == "__main__":
-    main(sys.argv[1:])

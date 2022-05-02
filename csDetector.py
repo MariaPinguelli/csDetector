@@ -9,15 +9,17 @@ import os
 
 class CsDetector:
 
-    # executeTool takes input like the following:
-    # ['-p', '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', '-r', 'https://github.com/tensorflow/ranking', '-s', './senti', '-o', './out', (optional)'-sd', (optional)'2021-12-31']
     def executeTool(self, argv):
-        devNetwork(argv)
+        # formattedResult can be used to print well formatted data in console (if executed from cli)
+        # result instead can be used to return the list of community smells acronym if executed from external sources
+        formattedResult, result = devNetwork(argv)
+        return formattedResult, result
 
 
 if __name__ == "__main__":
 
     inputData = sys.argv[1:]
-    print(inputData)
     tool = CsDetector()
-    tool.executeTool(inputData)
+    formattedResults, results = tool.executeTool(inputData)
+    print(results)
+    print(formattedResults)

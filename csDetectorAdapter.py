@@ -11,22 +11,23 @@ class CsDetectorAdapter(CsDetector):
     def __init__(self):
         super().__init__()
 
-    def executeTool(self, gitRepository, gitPAT, startingDate="default", sentiFolder="./senti", outputFolder="./out"):
+    def executeTool(self, gitRepository, gitPAT, startingDate="null", sentiFolder="./senti", outputFolder="./out"):
 
-        if(startingDate == "default"):
+        if(startingDate == "null"):
             # in this branch we execute the tool normally because no date was provided
-            super().executeTool(
+            return super().executeTool(
                 ["-p", gitPAT, "-r", gitRepository, "-s", sentiFolder, "-o", outputFolder])
-            return
+
         else:
             # if a date is specified we have to execute with one more parameter
-            super().executeTool(['-p', gitPAT, '-r', gitRepository,
-                                 '-s', sentiFolder, '-o', outFolder, '-sd', startingDate])
-            return
+            return super().executeTool(['-p', gitPAT, '-r', gitRepository,
+                                        '-s', sentiFolder, '-o', outFolder, '-sd', startingDate])
 
 
 if __name__ == "__main__":
 
     tool = CsDetectorAdapter()
-    tool.executeTool("https://github.com/tensorflow/ranking",
-                     "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")
+    formattedResult, result = tool.executeTool("https://github.com/tensorflow/ranking",
+                                               "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")
+    print(result)
+    print(formattedResult)

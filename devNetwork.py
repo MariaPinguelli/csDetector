@@ -43,7 +43,6 @@ communitySmells = [
 
 
 def devNetwork(argv):
-    print(argv)
     try:
         # validate running in venv
         if not hasattr(sys, "prefix"):
@@ -198,7 +197,7 @@ def devNetwork(argv):
                         smell, get_community_smell_name(detectedSmells[index])]
             add_to_smells_dataset(
                 config, batchDate.strftime("%m/%d/%Y"), detectedSmells)
-        print(result)
+        return result, detectedSmells
     finally:
         # close repo to avoid resource leaks
         if "repo" in locals():

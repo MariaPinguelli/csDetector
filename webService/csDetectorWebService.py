@@ -1,5 +1,9 @@
 import flask
-from flask import request
+import os, sys
+p = os.path.abspath('.')
+sys.path.insert(1, p)
+from flask import jsonify, request
+from csDetectorAdapter import CsDetectorAdapter
 
 
 app = flask.Flask(__name__)
@@ -12,9 +16,10 @@ def getSmells():
         pat = str(request.args['pat'])
     else:
         return "Error: No id field provided. Please specify an id."
-    # tool = CsDetectorAdapter()
-    # print(tool.executeTool(repo, pat))
-    return "<p>ueeee</p>"
+    tool = CsDetectorAdapter()
+    result = tool.executeTool(repo, pat)
+    r = jsonify(result)
+    return r
 
 
 @app.route('/', methods=['GET'])

@@ -21,13 +21,13 @@ class CsDetectorAdapter(CsDetector):
         else:
             # if a date is specified we have to execute with one more parameter
             return super().executeTool(['-p', gitPAT, '-r', gitRepository,
-                                        '-s', sentiFolder, '-o', outFolder, '-sd', startingDate])
+                                        '-s', sentiFolder, '-o', outputFolder, '-sd', startingDate])
 
 
 if __name__ == "__main__":
 
     tool = CsDetectorAdapter()
     formattedResult, result = tool.executeTool("https://github.com/tensorflow/ranking",
-                                               "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")
+                                               "")
     print(result)
     print(formattedResult)

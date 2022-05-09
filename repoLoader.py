@@ -3,6 +3,7 @@ import git
 import shutil
 import stat
 from subprocess import call
+import time
 
 from configuration import Configuration
 
@@ -31,22 +32,24 @@ def getRepo(config: Configuration):
     return repo
 
 
-def deleteRepo(config: Configuration):
+def delete_repo(config: Configuration):
 
     # build path
-    repoPath = os.path.join(
-        config.repositoryPath,
-        "{}.{}".format(config.repositoryOwner, config.repositoryName),
-    )
-    for i in os.listdir(repoPath):
-        if i.endswith('git'):
-            tmp = os.path.join(repoPath, i)
-            # We want to unhide the .git folder before unlinking it.
-            while True:
-                call(['attrib', '-H', tmp])
-                break
-            shutil.rmtree(tmp, onerror=on_rm_error)
-    shutil.rmtree(repoPath, onerror=None, ignore_errors=True)
+    repoPath = os.path.join(config.repositoryPath, "{}.{}".format(
+        config.repositoryOwner, config.repositoryName),)
+    delete_git_folder(repoPath+"/.git")
+    time.sleep(0.2)
+    os.rmdir(repoPath)
+    shutil.rmtree(config.repositoryPath)
+
+
+def delete_git_folder(path):
+    # We want to unhide the .git folder before unlinking it.
+    while True:
+        call(['attrib', '-H', path])
+        break
+    shutil.rmtree(path, onerror=on_rm_error)
+    return
 
 
 def on_rm_error(func, path, exc_info):

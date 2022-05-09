@@ -11,6 +11,7 @@ import pandas as pd
 
 from configuration import parseDevNetworkArgs
 from repoLoader import getRepo
+from repoLoader import deleteRepo
 from aliasWorker import replaceAliases
 from commitAnalysis import commitAnalysis
 import centralityAnalysis as centrality
@@ -197,6 +198,7 @@ def devNetwork(argv):
                         smell, get_community_smell_name(detectedSmells[index])]
             add_to_smells_dataset(
                 config, batchDate.strftime("%m/%d/%Y"), detectedSmells)
+        deleteRepo(config)
         return result, detectedSmells
     finally:
         # close repo to avoid resource leaks

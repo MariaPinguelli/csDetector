@@ -198,16 +198,16 @@ def devNetwork(argv):
                         smell, get_community_smell_name(detectedSmells[index])]
             add_to_smells_dataset(
                 config, batchDate.strftime("%m/%d/%Y"), detectedSmells)
-        # delete_repo(config)
         return result, detectedSmells
     finally:
         # close repo to avoid resource leaks
         if "repo" in locals():
             del repo
+        delete_repo(config)
+
+
 
 # converting community smell acronym in full name
-
-
 def get_community_smell_name(smell):
     for sm in communitySmells:
         if sm["acronym"] == smell:
@@ -215,8 +215,6 @@ def get_community_smell_name(smell):
     return smell
 
 # collecting execution data into a dataset
-
-
 def add_to_smells_dataset(config, startingDate, detectedSmells):
     with pd.ExcelWriter('./communitySmellsDataset.xlsx', engine="openpyxl", mode='a', if_sheet_exists="overlay") as writer:
         dataframe = pd.DataFrame(index=[writer.sheets['dataset'].max_row],

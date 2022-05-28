@@ -26,7 +26,10 @@ class CsDetectorAdapter(CsDetector):
 if __name__ == "__main__":
 
     tool = CsDetectorAdapter()
-    formattedResult, result = tool.executeTool("https://github.com/tensorflow/ranking",
-                                               "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")
+    formattedResult, result = tool.executeTool(gitRepository="https://github.com/tensorflow/ranking",
+                                               gitPAT="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",
+                                               startingDate=None,
+                                               outputFolder="./output",
+                                               sentiFolder="./senti")
     print(result)
     print(formattedResult)

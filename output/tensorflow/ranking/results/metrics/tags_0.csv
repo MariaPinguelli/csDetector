@@ -1,0 +1,16 @@
+Path,Date,Commit Count
+refs/tags/v0.1.3,2019-06-20,49
+refs/tags/v0.1.4,2019-09-04,25
+refs/tags/v0.1.5,2019-09-24,10
+refs/tags/v0.1.6,2019-10-21,8
+refs/tags/v0.2.0,2019-10-22,7
+refs/tags/v0.2.1,2019-12-18,33
+refs/tags/v0.2.2,2020-01-16,12
+refs/tags/v0.2.3,2020-03-06,11
+refs/tags/v0.3.0,2020-03-23,10
+refs/tags/v0.3.1,2020-06-01,39
+refs/tags/v0.3.2,2020-08-19,54
+refs/tags/v0.3.3,2021-01-29,94
+refs/tags/v0.4.0,2021-05-24,84
+refs/tags/v0.4.2,2021-07-22,81
+refs/tags/v0.5.0,2021-11-16,34

@@ -2,6 +2,7 @@ import pytest
 import os
 
 from configuration import Configuration
+from csDetectorAdapter import CsDetectorAdapter
 from devNetwork import add_to_smells_dataset
 import pandas as pd
 
@@ -73,7 +74,7 @@ class Test:
         df = pd.read_excel(io="./communitySmellsDataset.xlsx", sheet_name='dataset')
 
         are_row_equals = True
-        #controllo tutte le colonne delle ultime due righe
+        # controllo tutte le colonne delle ultime due righe
         for x in range(1, df.iloc[max_row_in_excel - 1].size):
             if df.iloc[max_row_in_excel - 1][x] != df.iloc[max_row_in_excel - 2][x]:
                 are_row_equals = False
@@ -87,7 +88,8 @@ class Test:
     def test_tc_ssc_1_3(self, example_config, example_detected_smells, path):
 
         max_row_in_excel = 0
-        with pd.ExcelWriter('./communitySmellsDataset.xlsx', engine="openpyxl", mode="a",if_sheet_exists="overlay") as writer:
+        with pd.ExcelWriter('./communitySmellsDataset.xlsx', engine="openpyxl", mode="a",
+                            if_sheet_exists="overlay") as writer:
             max_row_in_excel = writer.sheets['dataset'].max_row
 
         add_to_smells_dataset(example_config, None,
@@ -101,3 +103,102 @@ class Test:
             add_to_smells_dataset(None, example_starting_date, example_detected_smells, path)
 
     # CR_1-ATE
+
+    # gitRepository, gitPAT, startingDate="null", sentiFolder="./senti", outputFolder="./out"
+
+    def test_tc_ate_1_1(self):
+        tool = CsDetectorAdapter()
+        tool.executeTool(gitRepository="https://github.com/tensorflow/ranking",
+                         gitPAT="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",
+                         #startingDate="2022-05-27",
+                         outputFolder="../output",
+                         sentiFolder="../senti")
+
+    def test_tc_ate_1_2(self):
+        with pytest.raises(ValueError) as err:
+            tool = CsDetectorAdapter()
+            tool.executeTool("https://github.com/nuri22/csDetector",
+                             "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"
+                             "26/05/2022",
+                             "./senti",
+                             "arcimboldo")
+            assert "The output folder provided is not avaiable in the file system or have restricted access" in err.value
+
+    def test_tc_ate_1_3(self):
+        with pytest.raises(ValueError) as err:
+            tool = CsDetectorAdapter()
+            tool.executeTool("https://github.com/nuri22/csDetector",
+                             "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"
+                             "26/05/2022",
+                             "./senti",
+                             None)
+            assert "A valid output folder is needed to save the analysis of the repository" in err.value
+
+    def test_tc_ate_1_4(self):
+        try:
+            with pytest.raises(ValueError) as err:
+                tool = CsDetectorAdapter()
+                os.mkdir("./arcimboldo")
+                tool.executeTool("https://github.com/nuri22/csDetector",
+                                 "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"
+                                 "26/05/2022",
+                                 "./arcimboldo",
+                                 "./output")
+                assert "The senti folder provided does not contains the needed files. Check the README for more details" in err.value
+        finally:
+            os.rmdir("./arcimboldo")
+
+    def test_tc_ate_1_5(self):
+        try:
+            with pytest.raises(ValueError) as err:
+                tool = CsDetectorAdapter()
+                os.mkdir("./arcimboldo")
+                tool.executeTool("https://github.com/nuri22/csDetector",
+                                 "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"
+                                 "26/05/2022",
+                                 "pappappero",
+                                 "./output")
+                assert "A malformed or invalid senti folder is provided" in err.value
+        finally:
+            os.rmdir("./arcimboldo")
+
+    def test_tc_ate_1_6(self):
+        with pytest.raises(ValueError) as err:
+            tool = CsDetectorAdapter()
+            tool.executeTool("https://github.com/nuri22/csDetector",
+                             "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"
+                             "26/05/2022",
+                             None,
+                             "./output")
+
+            assert "A valid senti folder is needed to perform sentiment analysis on the repository" in err.value
+
+    def test_tc_ate_1_7(self):
+        with pytest.raises(ValueError) as err:
+            tool = CsDetectorAdapter()
+            tool.executeTool("https://github.com/nuri22/csDetector",
+                             None,
+                             "26/05/2022",
+                             "./senti",
+                             "./output")
+            assert "A valid Github PAT is needed to clone the repository" in err.value
+
+    def test_tc_ate_1_8(self):
+        with pytest.raises(ValueError) as err:
+            tool = CsDetectorAdapter()
+            tool.executeTool("Io amo il testing",
+                             "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",
+                             "26/05/2022",
+                             "./senti",
+                             "./output")
+            assert "The repository URL inserted is not valid or malformed" in err.value
+
+    def test_tc_ate_1_9(self):
+        with pytest.raises(ValueError) as err:
+            tool = CsDetectorAdapter()
+            tool.executeTool(None,
+                             "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",
+                             "26/05/2022",
+                             "./senti",
+                             "./output")
+            assert "The repository URL is needed" in err.value

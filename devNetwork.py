@@ -33,7 +33,7 @@ communitySmells = [
     {"acronym": "OS", "name": "Organizational Skirmish"},
     {"acronym": "SD", "name": "Solution Defiance "},
     {"acronym": "RS", "name": "Radio Silence"},
-    {"acronym": "TFS", "name": "Truck Factor Smell"},
+    {"acronym": "TF", "name": "Truck Factor Smell"},
     {"acronym": "UI", "name": "Unhealthy Interaction"},
     {"acronym": "TC", "name": "Toxic Communication"},
 ]
@@ -196,7 +196,7 @@ def devNetwork(argv):
                     result[smellName] = [
                         smell, get_community_smell_name(detectedSmells[index])]
             add_to_smells_dataset(
-                config, batchDate.strftime("%m/%d/%Y"), detectedSmells,'./communitySmellsDataset.xlsx')
+                config, batchDate.strftime("%m/%d/%Y"), detectedSmells, './communitySmellsDataset.xlsx')
         return result, detectedSmells
     finally:
         # close repo to avoid resource leaks
@@ -210,13 +210,12 @@ def get_community_smell_name(smell):
     for sm in communitySmells:
         if sm["acronym"] == smell:
             return sm["name"]
-    return smell #perchè non segnaliamo all'utente che sto smell non esiste?
+    return smell
 
 # collecting execution data into a dataset
 
 
 def add_to_smells_dataset(config, starting_date, detected_smells, path):
-    #ls = os.listdir(path)
     with pd.ExcelWriter(path, engine="openpyxl", mode='a', if_sheet_exists="overlay") as writer:
         dataframe = pd.DataFrame(index=[writer.sheets['dataset'].max_row],
                                  data={'repositoryUrl': [config.repositoryUrl],

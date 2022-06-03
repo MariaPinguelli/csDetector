@@ -15,10 +15,18 @@ def getSmells():
     if 'repo' in request.args:
         repo = str(request.args['repo'])
         pat = str(request.args['pat'])
+        user = str(request.args['user'])
     else:
         return "Error: No id field provided. Please specify an id."
+
+    print(os.getcwd())
+    try:
+        os.mkdir("out/output_"+user)
+    except FileExistsError():
+        pass
+
     tool = CsDetectorAdapter()
-    result = tool.executeTool(repo, pat)
+    formattedResult, result = tool.executeTool(repo, pat,outputFolder="out/output_"+user)
     r = jsonify(result) 
     return r
     
@@ -30,4 +38,4 @@ def home():
     return "<h1>Hello!</h1><p>To execute csDetector, please try running /getSmells?repo=REPOSITORY_URL&pat=GIT_PAT.</p>"
 
 
-app.run(threaded=True)
+app.run(port=5001, threaded=True)

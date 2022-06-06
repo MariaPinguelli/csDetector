@@ -12,24 +12,32 @@ app = flask.Flask(__name__)
 
 @app.route('/getSmells', methods=['GET'])
 def getSmells():
+
     if 'repo' in request.args:
         repo = str(request.args['repo'])
+    else:
+        return "Error: No repo field provided. Please specify a repo.", 400
+
+    if 'pat' in request.args:
         pat = str(request.args['pat'])
+    else:
+        return "Error: No pat field provided. Please specify a pat.", 400
+
+    if 'user' in request.args:
         user = str(request.args['user'])
     else:
-        return "Error: No id field provided. Please specify an id."
+        user = "default" 
 
-    print(os.getcwd())
     try:
-        os.mkdir("out/output_"+user)
-    except FileExistsError():
+        os.mkdir("../out/output_"+user)
+    except:
         pass
 
     tool = CsDetectorAdapter()
-    formattedResult, result = tool.executeTool(repo, pat,outputFolder="out/output_"+user)
-    r = jsonify(result) 
+    formattedResult, result = tool.executeTool(repo, pat, outputFolder="out/output_"+user)
+    r = jsonify(result)
     return r
-    
+
 
  
 

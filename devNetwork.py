@@ -11,7 +11,6 @@ import pandas as pd
 
 from configuration import parseDevNetworkArgs
 from repoLoader import getRepo
-from repoLoader import delete_repo
 from aliasWorker import replaceAliases
 from commitAnalysis import commitAnalysis
 import centralityAnalysis as centrality
@@ -40,11 +39,8 @@ communitySmells = [
 ]
 
 
-# This is the actual target , which means has the functionality we need
-
-
+# This is the actual target of the adapter pattern, which means has the functionality we need
 def devNetwork(argv):
-    try:
         # validate running in venv
         if not hasattr(sys, "prefix"):
             raise Exception(
@@ -199,12 +195,6 @@ def devNetwork(argv):
             add_to_smells_dataset(
                 config, batchDate.strftime("%m/%d/%Y"), detectedSmells)
         return result, detectedSmells
-    finally:
-        # close repo to avoid resource leaks
-        if "repo" in locals():
-            del repo
-        delete_repo(config)
-
 
 
 # converting community smell acronym in full name

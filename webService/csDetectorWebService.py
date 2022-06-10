@@ -2,17 +2,16 @@ import flask
 import os, sys
 p = os.path.abspath('.')
 sys.path.insert(1, p)
-from flask import jsonify, request
+from flask import jsonify, request, send_file
 from csDetectorAdapter import CsDetectorAdapter
  
-
-
 app = flask.Flask(__name__)
+app.config['UPLOAD_FOLDER'] = "/"
 
 
 @app.route('/getSmells', methods=['GET'])
 def getSmells():
-
+    needed_graphs = False
     if 'repo' in request.args:
         repo = str(request.args['repo'])
     else:
@@ -28,17 +27,28 @@ def getSmells():
     else:
         user = "default" 
 
+    if 'graphs' in request.args:
+            needed_graphs = bool(request.args['graphs'])    
     try:
         os.mkdir("../out/output_"+user)
     except:
         pass
 
     tool = CsDetectorAdapter()
-    formattedResult, result = tool.executeTool(repo, pat, outputFolder="out/output_"+user)
-    r = jsonify(result)
+    formattedResult, result, config = tool.executeTool(repo, pat, outputFolder="out/output_"+user)
+
+    if needed_graphs:
+        path = os.path.join(config.resultsPath, f"commitCentrality_0.pdf")
+        print(path)
+
+    r = jsonify({"result": result, "files":[path]})
     return r
 
-
+@app.route('/uploads/<path:filename>')
+def download_file(filename):
+    fn = os.path.join(os.getcwd(), filename)
+    print(fn)
+    return send_file(fn)
  
 
 @app.route('/', methods=['GET'])

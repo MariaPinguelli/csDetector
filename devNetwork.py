@@ -194,7 +194,7 @@ def devNetwork(argv):
                         smell, get_community_smell_name(detectedSmells[index])]
             add_to_smells_dataset(
                 config, batchDate.strftime("%m/%d/%Y"), detectedSmells)
-        return result, detectedSmells
+        return result, detectedSmells, config
 
 
 # converting community smell acronym in full name

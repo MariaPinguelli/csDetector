@@ -37,11 +37,17 @@ def getSmells():
     tool = CsDetectorAdapter()
     formattedResult, result, config = tool.executeTool(repo, pat, outputFolder="out/output_"+user)
 
+    paths=[]
     if needed_graphs:
-        path = os.path.join(config.resultsPath, f"commitCentrality_0.pdf")
-        print(path)
+        paths.append(os.path.join(config.resultsPath, f"commitCentrality_0.pdf"))
+        paths.append(os.path.join(config.resultsPath, f"Issues_0.pdf"))
+        paths.append(os.path.join(config.resultsPath, f"issuesAndPRsCentrality_0.pdf"))
+        paths.append(os.path.join(config.resultsPath, f"PRs_0.pdf"))
 
-    r = jsonify({"result": result, "files":[path]})
+    
+    
+    print(paths)
+    r = jsonify({"result": result, "files":paths})
     return r
 
 @app.route('/uploads/<path:filename>')

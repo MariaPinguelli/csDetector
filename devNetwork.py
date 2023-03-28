@@ -39,11 +39,8 @@ communitySmells = [
 ]
 
 
-# This is the actual target , which means has the functionality we need
-
-
+# This is the actual target of the adapter pattern, which means has the functionality we need
 def devNetwork(argv):
-    try:
         # validate running in venv
         if not hasattr(sys, "prefix"):
             raise Exception(
@@ -196,16 +193,11 @@ def devNetwork(argv):
                     result[smellName] = [
                         smell, get_community_smell_name(detectedSmells[index])]
             add_to_smells_dataset(
-                config, batchDate.strftime("%m/%d/%Y"), detectedSmells, './communitySmellsDataset.xlsx')
-        return result, detectedSmells
-    finally:
-        # close repo to avoid resource leaks
-        if "repo" in locals():
-            del repo
+                config, batchDate.strftime("%m/%d/%Y"), detectedSmells)
+        return result, detectedSmells, config
+
 
 # converting community smell acronym in full name
-
-
 def get_community_smell_name(smell):
     for sm in communitySmells:
         if sm["acronym"] == smell:
@@ -213,10 +205,8 @@ def get_community_smell_name(smell):
     return smell
 
 # collecting execution data into a dataset
-
-
-def add_to_smells_dataset(config, starting_date, detected_smells, path):
-    with pd.ExcelWriter(path, engine="openpyxl", mode='a', if_sheet_exists="overlay") as writer:
+def add_to_smells_dataset(config, startingDate, detectedSmells):
+    with pd.ExcelWriter('./communitySmellsDataset.xlsx', engine="openpyxl", mode='a', if_sheet_exists="overlay") as writer:
         dataframe = pd.DataFrame(index=[writer.sheets['dataset'].max_row],
                                  data={'repositoryUrl': [config.repositoryUrl],
                                        'repositoryName': [config.repositoryName],

@@ -194,11 +194,13 @@ def parse_dev_network_args(args: Sequence[str]):
 
     if args.sentiStrengthPath is None:
         raise ValueError("A valid senti folder is needed to perform sentiment analysis on the repository")
-
+    print("\n\n-----------------------")
+    print(args.sentiStrengthPath)
+    print("-----------------------\n\n")
     try:
         with os.scandir(args.sentiStrengthPath) as entries:
             for entry in entries:
-                if "SentiStrength" in entry.name:
+                if "TensiStrength" in entry.name:
                     senti_files_found = True
                     break
         if not senti_files_found:

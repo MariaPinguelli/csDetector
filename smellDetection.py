@@ -39,7 +39,11 @@ def smell_detection(config: Configuration, batchIdx: int):
     raw_smells = {smell: all_models[smell].predict(
         metrics) for smell in all_models}
     detected_smells = [smell for smell in smells if raw_smells[smell][0] == 1]
-
+    # verificar os dados de raw_smells
+    print("\n\n\n --------------------")
+    print("raw_smells")
+    print(raw_smells)
+    print("-------------------- \n\n\n")
     # add last commit date as first output param
     detected_smells.insert(0, results["LastCommitDate"])
 

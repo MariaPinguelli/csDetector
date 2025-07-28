@@ -9,6 +9,7 @@ import pkg_resources
 import sentistrength
 import csv
 import pandas as pd
+import traceback
 
 from configuration import parse_dev_network_args
 from repoLoader import get_repo
@@ -70,11 +71,11 @@ def devNetwork(argv):
         senti = sentistrength.PySentiStr()
 
         senti_jar_path = os.path.join(
-            config.sentiStrengthPath, "SentiStrength.jar").replace("\\", "/")
+            config.sentiStrengthPath, "TensiStrengthMain.jar").replace("\\", "/")
         senti.setSentiStrengthPath(senti_jar_path)
 
         senti_data_path = os.path.join(
-            config.sentiStrengthPath, "SentiStrength_Data").replace("\\", "/") + "/"
+            config.sentiStrengthPath, "TensiStrength_Data").replace("\\", "/") + "/"
         senti.setSentiStrengthLanguageFolderPath(senti_data_path)
 
         # prepare batch delta
@@ -101,6 +102,8 @@ def devNetwork(argv):
             delta,
             batch_dates,
         )
+
+        # depois daqui
 
         testFormatt = {}
         testResult = []
@@ -185,11 +188,20 @@ def devNetwork(argv):
     except ValueError as message:
         raise ValueError(message)
     except Exception as error:
-        if str(error).__contains__("401"):
-            logger.error("The PAT could be wrong or have reached the maximum number of requests. See https://docs.github.com/en/graphql/overview/resource-limitations for more information")
+        # if str(error).__contains__("401"):
+        #     logger.error("The PAT could be wrong or have reached the maximum number of requests. See https://docs.github.com/en/graphql/overview/resource-limitations for more information")
+        # else:
+        #     logger.error("Exception DEV NETWORK - %s", str(error))
+        if "401" in str(error) or "rateLimit" in str(error):
+            logger.error("PAT inválido ou limite excedido.")
+            custom_exception = customException("Erro: Token inválido ou limite de requisições excedido.", 901)
+            return {}, [], None, custom_exception.to_json()
         else:
-            logger.error("Exception DEV NETWORK - %s", str(error))
-
+            logger.error("Erro inesperado: %s", str(error))
+            custom_exception = customException(str(error), 999)
+            return {}, [], None, custom_exception.to_json()
+        # print("\n\n\n\n -------------------------------")
+        # print(traceback.format_exc())
     finally:
         # close repo to avoid resource leaks
         if "repo" in locals():

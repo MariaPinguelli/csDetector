@@ -1,0 +1,9 @@
+{
+  "name": "csDetector DevContainer",
+  "build": {
+    "context": "..",
+    "dockerfile": "../Dockerfile"
+  },
+  "forwardPorts": [5001],
+//   "postCreateCommand": "ls -la /app"
+}

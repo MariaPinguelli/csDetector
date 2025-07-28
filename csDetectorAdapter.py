@@ -15,7 +15,7 @@ class CsDetectorAdapter(CsDetector):
     def __init__(self):
         super().__init__()
 
-    def executeTool(self, gitRepository, branch, gitPAT, startingDate="null", sentiFolder="./sentiStrenght", outputFolder="./out", endDate="null"):
+    def executeTool(self, gitRepository, branch, gitPAT, startingDate="null", sentiFolder="./senti", outputFolder="./out", endDate="null"):
         args = ["-p", gitPAT, "-r", gitRepository, "-b", branch, "-s", sentiFolder, "-o", outputFolder]
         if startingDate == "null":
             # in this branch we execute the tool normally because no date was provided
@@ -39,6 +39,6 @@ if __name__ == "__main__":
                                                      gitPAT=SECRET_PAT,
                                                      startingDate=None,
                                                      outputFolder="./out",
-                                                     sentiFolder="./sentiStrenght")
+                                                     sentiFolder="./senti")
     print(result)
     print(formattedResult)

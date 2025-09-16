@@ -10,6 +10,7 @@ import sentistrength
 import csv
 import pandas as pd
 import traceback
+import re
 
 from configuration import parse_dev_network_args
 from repoLoader import get_repo
@@ -188,20 +189,40 @@ def devNetwork(argv):
     except ValueError as message:
         raise ValueError(message)
     except Exception as error:
-        # if str(error).__contains__("401"):
-        #     logger.error("The PAT could be wrong or have reached the maximum number of requests. See https://docs.github.com/en/graphql/overview/resource-limitations for more information")
-        # else:
-        #     logger.error("Exception DEV NETWORK - %s", str(error))
-        if "401" in str(error) or "rateLimit" in str(error):
+        error_str = str(error)
+        
+        # Limpar mensagens HTML
+        if '<!DOCTYPE html>' in error_str or '<html>' in error_str.lower():
+            texts = re.findall(r'<(p|title|div)[^>]*>(.*?)</\1>', error_str, re.IGNORECASE)
+            error_messages = [re.sub(r'<[^>]+>', '', text[1]).strip() for text in texts]
+            error_str = " | ".join([msg for msg in error_messages if msg])
+            error = error_str
+        
+        # Tratamento específico para erro Unicorn
+        if "unicorn" in error_str.lower() or "couldn't respond in time" in error_str.lower():
+            logger.error("Servidor GitHub sobrecarregado (Unicorn error).")
+            custom_exception = customException("Erro: Servidor GitHub temporariamente indisponível. Tente novamente em alguns minutos.", 503)
+            return {}, [], None, custom_exception.to_json()
+        
+        elif "timeout" in error_str.lower():
+            logger.error("Timeout na requisição para GitHub.")
+            custom_exception = customException("Erro: Timeout na conexão com GitHub. Tente novamente com uma conexão mais estável.", 504)
+            return {}, [], None, custom_exception.to_json()
+        
+        elif "401" in error_str or "rateLimit" in error_str or "rate limit" in error_str.lower():
             logger.error("PAT inválido ou limite excedido.")
             custom_exception = customException("Erro: Token inválido ou limite de requisições excedido.", 901)
             return {}, [], None, custom_exception.to_json()
+        
+        elif "403" in error_str or "forbidden" in error_str.lower():
+            logger.error("Acesso proibido ou limite secundário.")
+            custom_exception = customException("Erro: Acesso proibido pelo GitHub.", 902)
+            return {}, [], None, custom_exception.to_json()
+        
         else:
             logger.error("Erro inesperado: %s", str(error))
-            custom_exception = customException(str(error), 999)
+            custom_exception = customException(f"Erro inesperado: {error_str}", 999)
             return {}, [], None, custom_exception.to_json()
-        # print("\n\n\n\n -------------------------------")
-        # print(traceback.format_exc())
     finally:
         # close repo to avoid resource leaks
         if "repo" in locals():

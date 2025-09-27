@@ -28,6 +28,8 @@ from custmException import customException
 from dateutil.relativedelta import relativedelta
 import cadocsLogger
 
+import monthlySmellsLogger
+
 
 logger = cadocsLogger.get_cadocs_logger(__name__)
 if platform.system() == "Windows":
@@ -62,6 +64,8 @@ def devNetwork(argv):
         # prepare folders
         if os.path.exists(config.resultsPath):
             remove_tree(config.resultsPath)
+        
+        monthlySmellsLogger.clear_monthly_analysis(config)
 
         os.makedirs(config.metricsPath)
 
@@ -170,7 +174,7 @@ def devNetwork(argv):
             )
 
             # run smell detection
-            detected_smells = smell_detection(config, batchIdx)
+            detected_smells = smell_detection(config, batchIdx)[1:]
 
             # building a dictionary of detected community smells for each batch analyzed
             result["Index"] = batchIdx
@@ -182,6 +186,9 @@ def devNetwork(argv):
                     smell_name = "Smell" + str(index)
                     result[smell_name] = [smell, get_community_smell_name(detected_smells[index])]
             add_to_smells_dataset(config, batchDate.strftime("%m/%d/%Y"), detected_smells)
+
+            # save in diferent file
+            monthlySmellsLogger.add_to_monthly_analysis(config, detected_smells, batchDate)
 
         excep = None
         return result, detected_smells, config, excep

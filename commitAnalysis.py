@@ -1,6 +1,8 @@
 import git
 import csv
 import os
+import calendar
+from collections import defaultdict
 
 from dateutil.relativedelta import relativedelta
 from typing import List
@@ -30,56 +32,82 @@ def commit_analysis(
     # split commits into batches
     batches = []
     batch = []
-    start_date = None
+    startDate = None
     endDate = None
     if config.startDate is not None:
-        start_date = datetime.strptime(config.startDate, "%Y-%m-%d")
-        start_date = start_date.replace(tzinfo=pytz.UTC)
-    batch_start_date = None
-    batch_end_date = None
+        startDate = datetime.strptime(config.startDate, "%Y-%m-%d")
+        startDate = startDate.replace(tzinfo=pytz.UTC)
+    if config.endDate is not None:
+        endDate = datetime.strptime(config.endDate, "%Y-%m-%d")
+        endDate = endDate.replace(tzinfo=pytz.UTC)
+        
     batch_dates = []
 
-    for commit in Bar("Batching commits").iter(commits):
-        if start_date is not None and start_date > commit.committed_datetime:
+    commits_by_month = defaultdict(list)
+    
+    for commit in commits:
+        if startDate is not None and startDate > commit.committed_datetime:
             continue
         if endDate is not None and endDate < commit.committed_datetime:
             continue
-        # prepare first batch
-        if batch_start_date is None:
-            batch_start_date = commit.committed_datetime
-            batch_end_date = batch_start_date + delta
-
-            batch_dates.append(batch_start_date)
-
-        # prepare next batch
-        elif commit.committed_datetime > batch_end_date:
-            batches.append(batch)
-            batch = []
-            batch_start_date = commit.committed_datetime
-            batch_end_date = batch_start_date + delta
-
-            batch_dates.append(batch_start_date)
-
-        # populate current batch
-        batch.append(commit)
-
-    # complete batch list and perform clean up
-    batches.append(batch)
-    del batch, commits
+            
+        # Chave única para cada mês/ano
+        month_key = (commit.committed_datetime.year, commit.committed_datetime.month)
+        commits_by_month[month_key].append(commit)
+    
+    # Ordenar os meses cronologicamente
+    sorted_months = sorted(commits_by_month.keys())
+    
+    # Criar batches baseados no delta
+    current_batch = []
+    current_batch_start = None
+    
+    for i, month_key in enumerate(sorted_months):
+        year, month = month_key
+        month_commits = commits_by_month[month_key]
+        
+        # Data do primeiro commit deste mês (para batch_dates)
+        first_commit_date = month_commits[0].committed_datetime.replace(
+            day=1, hour=0, minute=0, second=0, microsecond=0
+        )
+        
+        if current_batch_start is None:
+            # Primeiro batch
+            current_batch_start = first_commit_date
+            current_batch.extend(month_commits)
+        else:
+            # Verificar se este mês ainda está dentro do delta do batch atual
+            months_diff = (year - current_batch_start.year) * 12 + (month - current_batch_start.month)
+            
+            if months_diff < delta.months:
+                # Ainda dentro do mesmo batch - adicionar commits
+                current_batch.extend(month_commits)
+            else:
+                # Batch completo - salvar e começar novo
+                batches.append(current_batch)
+                batch_dates.append(current_batch_start)
+                
+                # Novo batch
+                current_batch = list(month_commits)
+                current_batch_start = first_commit_date
+    
+    # Adicionar o último batch
+    if current_batch:
+        batches.append(current_batch)
+        batch_dates.append(current_batch_start)
 
     # run analysis per batch
     author_info_dict = {}
     days_active = list()
     for idx, batch in enumerate(batches):
-
-        # get batch authors
-        batch_author_info_dict, batch_days_active = commit_batch_analysis(
-            idx, senti, batch, config
-        )
-
-        # combine with main lists
-        author_info_dict.update(batch_author_info_dict)
-        days_active.append(batch_days_active)
+        if batch:  # Só analisar batches não vazios
+            batch_author_info_dict, batch_days_active = commit_batch_analysis(
+                idx, senti, batch, config
+            )
+            author_info_dict.update(batch_author_info_dict)
+            days_active.append(batch_days_active)
+        else:
+            days_active.append(0)
 
     return batch_dates, author_info_dict, days_active
 
@@ -94,10 +122,10 @@ def commit_batch_analysis(
 
     # traverse all commits
     logger.info("Analyzing commits")
-    start_date = None
+    startDate = None
     if config.startDate is not None:
-        start_date = datetime.strptime(config.start_date, "%Y-%m-%d")
-        start_date = start_date.replace(tzinfo=pytz.UTC)
+        startDate = datetime.strptime(config.startDate, "%Y-%m-%d")
+        startDate = startDate.replace(tzinfo=pytz.UTC)
     # sort commits
     commits.sort(key=lambda o: o.committed_datetime, reverse=True)
 
@@ -107,7 +135,7 @@ def commit_batch_analysis(
     first_date = None
     real_commit_count = 0
     for commit in Bar("Processing").iter(commits):
-        if start_date is not None and start_date > commit.committed_datetime:
+        if startDate is not None and startDate > commit.committed_datetime:
             continue
         if last_date is None:
             last_date = commit.committed_date

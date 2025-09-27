@@ -284,12 +284,10 @@ def issueRequest(
         # extract nodes
         nodes = result["repository"]["issues"]["nodes"]
 
-        print("\n\n\nsono qui")
         excep = None
         if not nodes:
             excep = customException("ERROR, The response of graphQL are empty", 890)
 
-        print("\n\n\n")
 
         # analyse
         for node in nodes:

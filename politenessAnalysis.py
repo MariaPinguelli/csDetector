@@ -61,6 +61,9 @@ def calculate_rpc(config, output_prefix, comment_batches):
 
 
 def get_results(comments: list):
+    if not comments:
+        print(f"⚠️  Batch sem comentários - retornando 0")
+        return 0
 
     # define default speaker
     speaker = convokit.Speaker(id="default", name="default")

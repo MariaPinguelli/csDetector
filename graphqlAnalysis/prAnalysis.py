@@ -279,9 +279,6 @@ def prRequest(
 
     count = 0
     while True:
-        print("\n\n-------------------")
-        print("DEBUG count --> ", count)
-        print("-------------------\n\n")
         count = count+1
         # get page
         result = gql.runGraphqlRequest(pat, query)

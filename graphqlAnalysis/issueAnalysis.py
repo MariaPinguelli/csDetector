@@ -276,7 +276,7 @@ def issueRequest(
     while True:
 
         # get page of PRs
-        query = buildIssueRequestQuery(owner, name, cursor)
+        query = buildIssueRequestQuery(owner, name, cursor, pat)
         result = gql.runGraphqlRequest(pat, query)
         print(f".", end="")
 
@@ -340,10 +340,12 @@ def issueRequest(
         return batches, excep.to_json()
 
 
-def buildIssueRequestQuery(owner: str, name: str, cursor: str):
+def buildIssueRequestQuery(owner: str, name: str, cursor: str, pat: str):
+    first_amount = '100' if within_node_limit(owner, name, pat) else '50'
+
     return """{{
         repository(owner: "{0}", name: "{1}") {{
-            issues(first: 100{2}) {{
+            issues(first: {3}{2}) {{
                 pageInfo {{
                     hasNextPage
                     endCursor
@@ -352,12 +354,12 @@ def buildIssueRequestQuery(owner: str, name: str, cursor: str):
                     number
                     createdAt    
                     closedAt
-                    participants(first: 100) {{
+                    participants(first: {3}) {{
                         nodes {{
                             login
                         }}
                     }}
-                    comments(first: 100) {{
+                    comments(first: {3}) {{
                         nodes {{
                             bodyText
                         }}
@@ -366,5 +368,30 @@ def buildIssueRequestQuery(owner: str, name: str, cursor: str):
             }}
         }}
     }}""".format(
-        owner, name, gql.buildNextPageQuery(cursor)
+        owner, name, gql.buildNextPageQuery(cursor), first_amount
     )
+
+def within_node_limit(owner: str, repo: str, pat: str):
+    """Estima o custo da query antes de executar"""
+    
+    stats_query = """
+        query {
+            repository(owner: "%s", name: "%s") {
+                issues {
+                    totalCount
+                }
+            }
+        }
+    """ % (owner, repo)
+    
+    result = gql.runGraphqlRequest(pat, stats_query)
+    
+    if result and 'repository' in result:
+        issues_count = result['repository']['issues']['totalCount']
+        
+        estimated_cost = issues_count * 201  # 1 (PR) + 100 (participantes) + 100 (comentários)
+        
+        if estimated_cost >= 500000:
+            return False
+    
+    return True

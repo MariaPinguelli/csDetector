@@ -120,26 +120,28 @@ def devNetwork(argv):
             delta,
             batch_dates,
         )
+        
+        print('debug 1')
 
         if excep:
             return testFormatt, testResult, testConfig, excep
-        
+        print('debug 2')
         if not pr_comment_batches:
             custom_exception = customException("ERROR, There are no comments in pullRequest", 890) 
             return testFormatt, testResult, testConfig, custom_exception.to_json()
-
+        print('debug 3')
 
         politeness_analysis(config, pr_comment_batches, issue_comment_batches)
-
+        print('debug 4')
         result = {}
         for batchIdx, batchDate in enumerate(batch_dates):
-
+            print('debug 5 - batchIdx - ', batchIdx)
             # get combined author lists
             combined_authors_in_batch = (
                 pr_participant_batches[batchIdx] +
-                issue_participant_batches[batchIdx]
+                (issue_participant_batches[batchIdx] if batchIdx < len(issue_participant_batches) else [])
             )
-
+            print('debug 6 - batchIdx - ', batchIdx)
             # build combined network
             centrality.build_graph_ql_network(
                 batchIdx,
@@ -147,23 +149,24 @@ def devNetwork(argv):
                 "issuesAndPRsCentrality",
                 config,
             )
-
+            print('debug 7 - batchIdx - ', batchIdx)
             # get combined unique authors for both PRs and issues
             unique_authors_in_pr_batch = set(
                 author for pr in pr_participant_batches[batchIdx] for author in pr
             )
-
+            # issue_comment_batch = list([len(c) for c in issue_comment_batches[batch_idx]]) if batch_idx < len(issue_comment_batches) else []
+            print('debug 8 - batchIdx - ', batchIdx)
             unique_authors_in_issue_batch = set(
-                author for pr in issue_participant_batches[batchIdx] for author in pr
+                author for pr in (issue_participant_batches[batchIdx] if batchIdx < len(issue_participant_batches) else []) for author in pr
             )
-
+            print('debug 9 - batchIdx - ', batchIdx)
             unique_authors_in_batch = unique_authors_in_pr_batch.union(
                 unique_authors_in_issue_batch
             )
-
+            print('debug 10 - batchIdx - ', batchIdx)
             # get batch core team
             batch_core_devs = core_devs[batchIdx]
-
+            print('debug 11 - batchIdx - ', batchIdx)
             # run dev analysis
             devAnalysis(
                 author_info_dict,
@@ -172,24 +175,25 @@ def devNetwork(argv):
                 batch_core_devs,
                 config,
             )
-
+            print('debug 12 - batchIdx - ', batchIdx)
             # run smell detection
             detected_smells = smell_detection(config, batchIdx)[1:]
-
+            print('debug 13 - batchIdx - ', batchIdx)
             # building a dictionary of detected community smells for each batch analyzed
             result["Index"] = batchIdx
             result["StartingDate"] = batchDate.strftime("%m/%d/%Y")
-
+            print('debug 14 - batchIdx - ', batchIdx)
             # separating smells and converting in their full name
             for index, smell in enumerate(detected_smells):
                 if index != 0:
                     smell_name = "Smell" + str(index)
                     result[smell_name] = [smell, get_community_smell_name(detected_smells[index])]
             add_to_smells_dataset(config, batchDate.strftime("%m/%d/%Y"), detected_smells)
-
+            print('debug 15 - batchIdx - ', batchIdx)
             # save in diferent file
             monthlySmellsLogger.add_to_monthly_analysis(config, detected_smells, batchDate)
-
+            print('debug 16 - batchIdx - ', batchIdx)
+        print('debug 17 ')
         excep = None
         return result, detected_smells, config, excep
 

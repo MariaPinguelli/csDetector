@@ -269,7 +269,7 @@ def analyzeSentiments(
 def prRequest(
     pat: str, owner: str, name: str, delta: relativedelta, batchDates: List[datetime]
 ):
-    query = buildPrRequestQuery(owner, name, None)
+    query = buildPrRequestQuery(owner, name, None, pat)
 
     # prepare batches
     batches = []
@@ -282,7 +282,7 @@ def prRequest(
         count = count+1
         # get page
         result = gql.runGraphqlRequest(pat, query)
-        print(f".", end="")
+        print(f".-", end="")
 
 
         # extract nodes
@@ -331,7 +331,7 @@ def prRequest(
             break
 
         cursor = pageInfo["endCursor"]
-        query = buildPrRequestQuery(owner, name, cursor)
+        query = buildPrRequestQuery(owner, name, cursor, pat)
 
     
     if batch != None:
@@ -340,10 +340,12 @@ def prRequest(
     return batches
 
 
-def buildPrRequestQuery(owner: str, name: str, cursor: str):
+def buildPrRequestQuery(owner: str, name: str, cursor: str, pat: str):
+    first_amount = '100' if within_node_limit(owner, name, pat) else '50'
+    
     return """{{
         repository(owner: "{0}", name: "{1}") {{
-            pullRequests(first:100{2}) {{
+            pullRequests(first:{3}{2}) {{
                 pageInfo {{
                     endCursor
                     hasNextPage
@@ -352,7 +354,7 @@ def buildPrRequestQuery(owner: str, name: str, cursor: str):
                     number
                     createdAt
                     closedAt
-                    participants(first: 100) {{
+                    participants(first: {3}) {{
                         nodes {{
                             login
                         }}
@@ -360,7 +362,7 @@ def buildPrRequestQuery(owner: str, name: str, cursor: str):
                     commits {{
                         totalCount
                     }}
-                    comments(first: 100) {{
+                    comments(first: {3}) {{
                         nodes {{
                             bodyText
                         }}
@@ -370,5 +372,30 @@ def buildPrRequestQuery(owner: str, name: str, cursor: str):
         }}
     }}
     """.format(
-        owner, name, gql.buildNextPageQuery(cursor)
+        owner, name, gql.buildNextPageQuery(cursor), first_amount
     )
+
+def within_node_limit(owner: str, repo: str, pat: str):
+    """Estima o custo da query antes de executar"""
+    
+    stats_query = """
+        query {
+            repository(owner: "%s", name: "%s") {
+                pullRequests {
+                    totalCount
+                }
+            }
+        }
+    """ % (owner, repo)
+    
+    result = gql.runGraphqlRequest(pat, stats_query)
+    
+    if result and 'repository' in result:
+        pr_count = result['repository']['pullRequests']['totalCount']
+        
+        estimated_cost = pr_count * 201  # 1 (PR) + 100 (participantes) + 100 (comentários)
+        
+        if estimated_cost >= 500000:
+            return False
+    
+    return True

@@ -173,7 +173,7 @@ https://docs.github.com/en/graphql/overview/explorer
 
 #### Developer Contributions metrics  
 
-```NoD ```: Number of developers (NoD): the total number of developers who have changed the code in a project.
+```NoD```: Number of developers (NoD): the total number of developers who have changed the code in a project.
 
 ```NAD``` : Number of Active Days of an author on a project.
 

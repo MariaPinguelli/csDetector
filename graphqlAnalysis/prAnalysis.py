@@ -282,7 +282,7 @@ def prRequest(
         count = count+1
         # get page
         result = gql.runGraphqlRequest(pat, query)
-        print(f".", end="")
+        print(f".-", end="")
 
 
         # extract nodes
@@ -395,7 +395,7 @@ def within_node_limit(owner: str, repo: str, pat: str):
         
         estimated_cost = pr_count * 201  # 1 (PR) + 100 (participantes) + 100 (comentários)
         
-        if estimated_cost >= 500_000:
+        if estimated_cost >= 500000:
             return False
     
     return True

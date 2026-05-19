@@ -12,19 +12,23 @@ def politeness_analysis(
     prCommentBatches: list,
     issueCommentBatches: list,
 ):
+    print('debug 3.1')
     calculate_accl(config, prCommentBatches, issueCommentBatches)
-
+    print('debug 3.2')
     calculate_rpc(config, "PR", prCommentBatches)
+    print('debug 3.3')
     calculate_rpc(config, "Issue", prCommentBatches)
+    print('debug 3.4')
 
 
 def calculate_accl(config, pr_comment_batches, issue_comment_batches):
+    print('debug 3.1.1')
     for batch_idx, batch in enumerate(pr_comment_batches):
-
+        print('debug 3.1.2 - batch_idx: ', batch_idx)
         pr_comment_lengths = list([len(c) for c in batch])
-        issue_comment_batch = list([len(c)
-                                 for c in issue_comment_batches[batch_idx]])
-
+        print('debug 3.1.3 - batch_idx: ', batch_idx)
+        issue_comment_batch = list([len(c) for c in issue_comment_batches[batch_idx]]) if batch_idx < len(issue_comment_batches) else []
+        print('debug 3.1.4 - batch_idx: ', batch_idx)
 
         if(len(issue_comment_batch) == 0 or len(pr_comment_lengths) == 0):
             issue_comment_lengths_mean = 0
@@ -32,9 +36,9 @@ def calculate_accl(config, pr_comment_batches, issue_comment_batches):
         else:
             pr_comment_lengths_mean = stats.calculate_stats(pr_comment_lengths)["mean"]
             issue_comment_lengths_mean = stats.calculate_stats(issue_comment_batch)["mean"]
-
+        print('debug 3.1.5 - batch_idx: ', batch_idx)
         accl = pr_comment_lengths_mean + issue_comment_lengths_mean / 2
-
+        print('debug 3.1.6 - batch_idx: ', batch_idx)
         # output results
         with open(os.path.join(config.resultsPath, f"results_{batch_idx}.csv"),
                   "a",
@@ -42,6 +46,7 @@ def calculate_accl(config, pr_comment_batches, issue_comment_batches):
                   ) as f:
             w = csv.writer(f, delimiter=",")
             w.writerow([f"ACCL", accl])
+        print('debug 3.1.7 - batch_idx: ', batch_idx)
 
 
 def calculate_rpc(config, output_prefix, comment_batches):
@@ -61,6 +66,9 @@ def calculate_rpc(config, output_prefix, comment_batches):
 
 
 def get_results(comments: list):
+    if not comments:
+        print(f"⚠️  Batch sem comentários - retornando 0")
+        return 0
 
     # define default speaker
     speaker = convokit.Speaker(id="default", name="default")

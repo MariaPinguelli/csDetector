@@ -20,7 +20,7 @@ def runGraphqlRequest(pat: str, query: str):
         try:
             if retry_count > 0:
                 sleep_time = random.randint(2, 5) * retry_count
-                print(f"🔄 Tentativa {retry_count + 1}/{max_retries + 1}. Aguardando {sleep_time}s...")
+                print(f"🔄 Tentativa {retry_count + 1}/{max_retries + 1}. Aguardando {sleep_time}s")
                 time.sleep(sleep_time)
             else:
                 sleep_time = random.randint(1, 3)
@@ -32,8 +32,15 @@ def runGraphqlRequest(pat: str, query: str):
                 headers=headers,
                 timeout=30
             )
+
+            # if not request:
+            #     print("📂 Resposta vazia :(")
+            #     return {}
+
+            if is_html_response(request):
+                error_msg = "🚫 GitHub retornou página de erro HTML (Unicorn)"
             
-            if request.status_code == 200:
+            elif request.status_code == 200:
                 response_data = request.json()
                 
                 if 'errors' in response_data:
@@ -58,7 +65,7 @@ def runGraphqlRequest(pat: str, query: str):
                 raise Exception(f"Access forbidden: {request.text}")
             
             elif request.status_code == 502 or request.status_code == 503:
-                print(f"⚠️ Servidor indisponível (HTTP {request.status_code}), tentando novamente...")
+                print(f"⚠️ Servidor indisponível (HTTP {request.status_code}), tentando novamente")
                 retry_count += 1
                 continue
                 
@@ -70,13 +77,13 @@ def runGraphqlRequest(pat: str, query: str):
                 )
                 
         except requests.exceptions.Timeout:
-            print("⏰ Timeout na requisição, tentando novamente...")
+            print("⏰ Timeout na requisição, tentando novamente")
             retry_count += 1
             last_exception = "Timeout"
             continue
             
         except requests.exceptions.ConnectionError:
-            print("🌐 Erro de conexão, tentando novamente...")
+            print("🌐 Erro de conexão, tentando novamente")
             retry_count += 1
             last_exception = "Connection error"
             continue
@@ -85,13 +92,13 @@ def runGraphqlRequest(pat: str, query: str):
             last_exception = str(e)
             
             if "rate limit" in str(e).lower() or "rate_limit" in str(e).lower():
-                print("🔁 Rate limit detectado pela mensagem, verificando...")
+                print("🔁 Rate limit detectado pela mensagem, verificando")
 
                 try:
                     rate_info = check_rate_limit(pat)
                     if rate_info and rate_info['remaining'] <= 0:
                         wait_time = calculate_wait_time(rate_info['resetAt'])
-                        print(f"⏳ Rate limit atingido. Aguardando {wait_time:.1f} segundos...")
+                        print(f"⏳ Rate limit atingido. Aguardando {wait_time:.1f} segundos")
                         time.sleep(wait_time)
                         continue
                 except:
@@ -118,6 +125,11 @@ def extractAuthorLogin(node):
 
     return node["login"]
 
+def is_html_response(response):
+    """Verifica se a resposta é HTML (erro do GitHub)"""
+    content_type = response.headers.get('content-type', '').lower()
+    return response.text.strip().startswith('<!DOCTYPE html>') or 'text/html' in content_type
+
 def handle_rate_limit(headers, pat):
     """
     Trata especificamente o rate limit da API
@@ -128,17 +140,17 @@ def handle_rate_limit(headers, pat):
             current_time = time.time()
             wait_time = max(reset_timestamp - current_time + 2, 2)
             
-            print(f"⏰ Rate limit atingido! Aguardando {wait_time:.1f} segundos...")
+            print(f"⏰ Rate limit atingido! Aguardando {wait_time:.1f} segundos")
             time.sleep(wait_time)
             return
         
         rate_info = check_rate_limit(pat)
         if rate_info:
             wait_time = calculate_wait_time(rate_info['resetAt'])
-            print(f"⏰ Rate limit atingido! Aguardando {wait_time:.1f} segundos...")
+            print(f"⏰ Rate limit atingido! Aguardando {wait_time:.1f} segundos")
             time.sleep(wait_time)
         else:
-            print("⏰ Rate limit atingido! Aguardando 1 hora...")
+            print("⏰ Rate limit atingido! Aguardando 1 hora")
             time.sleep(3600)
             
     except Exception as e:

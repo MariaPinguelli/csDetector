@@ -284,12 +284,10 @@ def issueRequest(
         # extract nodes
         nodes = result["repository"]["issues"]["nodes"]
 
-        print("\n\n\nsono qui")
         excep = None
         if not nodes:
             excep = customException("ERROR, The response of graphQL are empty", 890)
 
-        print("\n\n\n")
 
         # analyse
         for node in nodes:
@@ -391,9 +389,9 @@ def within_node_limit(owner: str, repo: str, pat: str):
     if result and 'repository' in result:
         issues_count = result['repository']['issues']['totalCount']
         
-        estimated_cost = issues_count * 201  # 1 (Issue) + 100 (participantes) + 100 (comentários)
+        estimated_cost = issues_count * 201  # 1 (PR) + 100 (participantes) + 100 (comentários)
         
-        if estimated_cost >= 500_000:
+        if estimated_cost >= 500000:
             return False
     
     return True
